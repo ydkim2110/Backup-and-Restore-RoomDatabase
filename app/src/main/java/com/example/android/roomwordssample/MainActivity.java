@@ -134,25 +134,35 @@ public class MainActivity extends AppCompatActivity {
                         .withListener(new MultiplePermissionsListener() {
                             @Override
                             public void onPermissionsChecked(MultiplePermissionsReport report) {
-                                WordRoomDatabase appDatabase = WordRoomDatabase.getDatabase(getApplicationContext());
-                                appDatabase.close();
+//                                WordRoomDatabase appDatabase = WordRoomDatabase.getDatabase(getApplicationContext());
+//                                appDatabase.close();
                                 Log.d("TAG", "onOptionsItemSelected: test: " + MainActivity.this.getDatabasePath("word_database").getAbsoluteFile());
                                 File dbOri = getDatabasePath("word_database");
-//                                File dbShmOri = getDatabasePath("word_database-shm");
-//                                File dbWal = getDatabasePath("word_database-wal");
+                                File dbShmOri = getDatabasePath("word_database-shm");
+                                File dbWal = getDatabasePath("word_database-wal");
                                 File file = new File(ROOT_DOWNLOAD_DIR_DOCUMENT);
                                 if (!file.exists()) {
                                     file.mkdirs();
                                 }
 
                                 File db2 = new File(ROOT_DOWNLOAD_DIR_DOCUMENT, "word_database");
-//                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
-//                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
+                                if (db2.exists()) {
+                                    Log.d("tAG", "onPermissionsChecked: data ada");
+                                    db2.setWritable(true);
+                                }
+                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
+                                if (dbShm2.exists()) {
+                                    dbShm2.setWritable(true);
+                                }
+                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
+                                if (dbWal2.exists()) {
+                                    dbWal2.setWritable(true);
+                                }
 
                                 try {
                                     copyFileUsingJava7Files(dbOri, db2);
-//                                    copyFileUsingJava7Files(dbShmOri, dbShm2);
-//                                    copyFileUsingJava7Files(dbWal, dbWal2);
+                                    copyFileUsingJava7Files(dbShmOri, dbShm2);
+                                    copyFileUsingJava7Files(dbWal, dbWal2);
                                     Toast.makeText(MainActivity.this, "Backup", Toast.LENGTH_SHORT).show();
                                 } catch (Exception e) {
                                     Log.e("TAG", e.toString());
@@ -178,21 +188,21 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onPermissionsChecked(MultiplePermissionsReport report) {
                                 Toast.makeText(MainActivity.this, "Restore", Toast.LENGTH_SHORT).show();
-                                WordRoomDatabase appDatabase = WordRoomDatabase.getDatabase(getApplicationContext());
-                                appDatabase.close();
+//                                WordRoomDatabase appDatabase = WordRoomDatabase.getDatabase(getApplicationContext());
+//                                appDatabase.close();
 
                                 File db = new File(ROOT_DOWNLOAD_DIR_DOCUMENT, "word_database");
-//                                File dbShm = new File(db.getParent(), "word_database-shm");
-//                                File dbWal = new File(db.getParent(), "word_database-wal");
+                                File dbShm = new File(db.getParent(), "word_database-shm");
+                                File dbWal = new File(db.getParent(), "word_database-wal");
 
                                 File db2 = getDatabasePath("word_database");
-//                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
-//                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
+                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
+                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
 
                                 try {
-                                    replaceFile(db, db2);
-//                                    replaceFile(dbShm, dbShm2);
-//                                    replaceFile(dbWal, dbWal2);
+                                    copyFileUsingJava7Files(db, db2);
+                                    copyFileUsingJava7Files(dbShm, dbShm2);
+                                    copyFileUsingJava7Files(dbWal, dbWal2);
                                 } catch (Exception e) {
                                     Log.d("TAG", e.toString());
                                 }
@@ -212,7 +222,12 @@ public class MainActivity extends AppCompatActivity {
 
     private static void copyFileUsingJava7Files(File source, File dest) throws IOException {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Files.copy(source.toPath(), dest.toPath());
+            if (dest.exists()) {
+                Files.deleteIfExists(dest.toPath());
+                Files.copy(source.toPath(), dest.toPath());
+            } else  {
+                Files.copy(source.toPath(), dest.toPath());
+            }
         }
     }
 
@@ -220,6 +235,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 //            File file = new File(dest.getAbsolutePath());
 //            file.delete();
+            if (dest.exists())
             Files.deleteIfExists(dest.toPath());
             Files.copy(source.toPath(), dest.toPath());
 
