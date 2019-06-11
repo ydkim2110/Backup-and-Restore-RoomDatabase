@@ -27,6 +27,7 @@ import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 
+import com.commonsware.cwac.saferoom.SQLCipherUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
@@ -58,11 +59,10 @@ import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
-    private static String DB_PATH = "/data/data/com.example.android.roomwordssample/databases/";
 
     public static final String ROOT_DOWNLOAD_DIR =
             Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "BackupApp" + File.separator;
-    public static final String ROOT_DOWNLOAD_DIR_DOCUMENT = ROOT_DOWNLOAD_DIR + "Documents"  + File.separator;
+    public static final String ROOT_DOWNLOAD_DIR_DOCUMENT = ROOT_DOWNLOAD_DIR + "Documents" + File.separator;
 
     public static final int NEW_WORD_ACTIVITY_REQUEST_CODE = 1;
 
@@ -72,6 +72,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // Get a new or existing ViewModel from the ViewModelProvider.
+        mWordViewModel = ViewModelProviders.of(this).get(WordViewModel.class);
+//        mWordViewModel.closeRoom();
+//        else if (SQLCipherUtils.getDatabaseState(dbOri) == SQLCipherUtils.State.ENCRYPTED){
+//            Log.d("TAG", "onCreate: sudah di enkripsi"+ SQLCipherUtils.getDatabaseState(dbOri));
+//        } else {
+//            Log.d("TAG", "onCreate: db belum ada");
+//        }
+
+//        mWordViewModel.openRoom();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -81,8 +91,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Get a new or existing ViewModel from the ViewModelProvider.
-        mWordViewModel = ViewModelProviders.of(this).get(WordViewModel.class);
 
         // Add an observer on the LiveData returned by getAlphabetizedWords.
         // The onChanged() method fires when the observed data changes and the activity is
@@ -109,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == NEW_WORD_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
-            Word word = new Word(data.getStringExtra(NewWordActivity.EXTRA_REPLY),1);
+            Word word = new Word(data.getStringExtra(NewWordActivity.EXTRA_REPLY), 1);
             mWordViewModel.insert(word);
         } else {
             Toast.makeText(
@@ -138,8 +146,8 @@ public class MainActivity extends AppCompatActivity {
 //                                appDatabase.close();
                                 Log.d("TAG", "onOptionsItemSelected: test: " + MainActivity.this.getDatabasePath("word_database").getAbsoluteFile());
                                 File dbOri = getDatabasePath("word_database");
-                                File dbShmOri = getDatabasePath("word_database-shm");
-                                File dbWal = getDatabasePath("word_database-wal");
+//                                File dbShmOri = getDatabasePath("word_database-shm");
+//                                File dbWal = getDatabasePath("word_database-wal");
                                 File file = new File(ROOT_DOWNLOAD_DIR_DOCUMENT);
                                 if (!file.exists()) {
                                     file.mkdirs();
@@ -150,20 +158,20 @@ public class MainActivity extends AppCompatActivity {
                                     Log.d("tAG", "onPermissionsChecked: data ada");
                                     db2.setWritable(true);
                                 }
-                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
-                                if (dbShm2.exists()) {
-                                    dbShm2.setWritable(true);
-                                }
-                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
-                                if (dbWal2.exists()) {
-                                    dbWal2.setWritable(true);
-                                }
+//                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
+//                                if (dbShm2.exists()) {
+//                                    dbShm2.setWritable(true);
+//                                }
+//                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
+//                                if (dbWal2.exists()) {
+//                                    dbWal2.setWritable(true);
+//                                }
 
                                 try {
                                     copyFileUsingJava7Files(dbOri, db2);
-                                    copyFileUsingJava7Files(dbShmOri, dbShm2);
-                                    copyFileUsingJava7Files(dbWal, dbWal2);
-                                    Toast.makeText(MainActivity.this, "Backup", Toast.LENGTH_SHORT).show();
+//                                    copyFileUsingJava7Files(dbShmOri, dbShm2);
+//                                    copyFileUsingJava7Files(dbWal, dbWal2);
+                                    Toast.makeText(MainActivity.this, "Backup sukses", Toast.LENGTH_SHORT).show();
                                 } catch (Exception e) {
                                     Log.e("TAG", e.toString());
                                     Toast.makeText(MainActivity.this, "eror", Toast.LENGTH_SHORT).show();
@@ -193,20 +201,24 @@ public class MainActivity extends AppCompatActivity {
                                 Log.d("TAG", "onPermissionsChecked: resteror");
 
                                 File db = new File(ROOT_DOWNLOAD_DIR_DOCUMENT, "word_database");
-                                File dbShm = new File(db.getParent(), "word_database-shm");
-                                File dbWal = new File(db.getParent(), "word_database-wal");
+//                                File dbShm = new File(db.getParent(), "word_database-shm");
+//                                File dbWal = new File(db.getParent(), "word_database-wal");
 
                                 File db2 = getDatabasePath("word_database");
-                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
-                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
+//                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
+//                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
 
                                 try {
                                     copyFileUsingJava7Files(db, db2);
-                                    copyFileUsingJava7Files(dbShm, dbShm2);
-                                    copyFileUsingJava7Files(dbWal, dbWal2);
+//                                    copyFileUsingJava7Files(dbShm, dbShm2);
+//                                    copyFileUsingJava7Files(dbWal, dbWal2);
+                                    Toast.makeText(MainActivity.this, "restore sukses", Toast.LENGTH_SHORT).show();
+//                                    mWordViewModel.closeRoom();
+//                                    mWordViewModel.openRoom();
 //                                    mWordViewModel.restore();
                                 } catch (Exception e) {
                                     Log.d("TAG", e.toString());
+                                    Toast.makeText(MainActivity.this, "restor eror", Toast.LENGTH_SHORT).show();
                                 }
 
                             }
@@ -217,6 +229,19 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }).check();
                 break;
+
+            case R.id.action_enkripsi:
+                File dbOri = getDatabasePath("word_database");
+                String word = "password";
+                char[] pass = word.toCharArray();
+                try {
+                    SQLCipherUtils.encrypt(this, dbOri, pass);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                Log.d("TAG", "onCreate: belum enkripsi" + SQLCipherUtils.getDatabaseState(dbOri));
+                break;
+
         }
         return true;
     }
@@ -227,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
             if (dest.exists()) {
                 Files.deleteIfExists(dest.toPath());
                 Files.copy(source.toPath(), dest.toPath());
-            } else  {
+            } else {
                 Files.copy(source.toPath(), dest.toPath());
             }
         }

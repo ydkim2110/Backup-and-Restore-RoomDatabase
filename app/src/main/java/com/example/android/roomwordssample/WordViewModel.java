@@ -53,4 +53,12 @@ public class WordViewModel extends AndroidViewModel {
 //    void restore() {
 //        mRepository.restore();
 //    }
+
+    void closeRoom() {
+        mRepository.closeRoom();
+    }
+
+    public void openRoom() {
+        mRepository.openRoom(getApplication());
+    }
 }

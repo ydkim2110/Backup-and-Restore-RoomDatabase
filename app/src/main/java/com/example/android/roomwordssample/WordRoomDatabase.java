@@ -16,23 +16,22 @@ package com.example.android.roomwordssample;
  * limitations under the License.
  */
 
-import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import android.content.Context;
-import android.os.AsyncTask;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import com.commonsware.cwac.saferoom.SafeHelperFactory;
 
 /**
  * This is the backend. The database. This used to be done by the OpenHelper.
  * The fact that this has very few comments emphasizes its coolness.
  */
 
-@Database(entities = {Word.class}, version = 3)
+@Database(entities = {Word.class}, version = 1)
 public abstract class WordRoomDatabase extends RoomDatabase {
 
     public abstract WordDao wordDao();
@@ -48,8 +47,7 @@ public abstract class WordRoomDatabase extends RoomDatabase {
                             WordRoomDatabase.class, "word_database")
                             // Wipes and rebuilds instead of migrating if no Migration object.
                             // Migration is not part of this codelab.
-                            .addMigrations(MIGRATION_1_2)
-                            .addMigrations(MIGRATION_2_3)
+
                             .addCallback(sRoomDatabaseCallback)
                             .build();
                 }
@@ -58,22 +56,22 @@ public abstract class WordRoomDatabase extends RoomDatabase {
         return INSTANCE;
     }
 
-    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
-        @Override
-        public void migrate(SupportSQLiteDatabase database) {
-            Log.d("TAG", "migrate: migrates 1_2");
-            database.execSQL("CREATE TABLE `Fruit` (`id` INTEGER, "
-                    + "`name` TEXT, PRIMARY KEY(`id`))");
-        }
-    };
-
-    static final Migration MIGRATION_2_3 = new Migration(2,3) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase database) {
-            Log.d("TAG", "migrate: migrates 2_3");
-            database.execSQL("ALTER TABLE `word_table` add count integer DEFAULT 0 NOT NULL");
-        }
-    };
+//    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
+//        @Override
+//        public void migrate(SupportSQLiteDatabase database) {
+//            Log.d("TAG", "migrate: migrates 1_2");
+//            database.execSQL("CREATE TABLE `Fruit` (`id` INTEGER, "
+//                    + "`name` TEXT, PRIMARY KEY(`id`))");
+//        }
+//    };
+//
+//    static final Migration MIGRATION_2_3 = new Migration(2,3) {
+//        @Override
+//        public void migrate(@NonNull SupportSQLiteDatabase database) {
+//            Log.d("TAG", "migrate: migrates 2_3");
+//            database.execSQL("ALTER TABLE `word_table` add count integer DEFAULT 0 NOT NULL");
+//        }
+//    };
 
     /**
      * Override the onOpen method to populate the database.

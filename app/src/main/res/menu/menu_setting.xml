@@ -9,4 +9,8 @@
         app:showAsAction="never"
         android:title="Restore"/>
 
+    <item android:id="@+id/action_enkripsi"
+        app:showAsAction="never"
+        android:title="Enkripsi"/>
+
 </menu>
