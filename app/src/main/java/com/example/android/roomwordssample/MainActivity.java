@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == NEW_WORD_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
-            Word word = new Word(data.getStringExtra(NewWordActivity.EXTRA_REPLY));
+            Word word = new Word(data.getStringExtra(NewWordActivity.EXTRA_REPLY),1);
             mWordViewModel.insert(word);
         } else {
             Toast.makeText(
@@ -190,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.makeText(MainActivity.this, "Restore", Toast.LENGTH_SHORT).show();
 //                                WordRoomDatabase appDatabase = WordRoomDatabase.getDatabase(getApplicationContext());
 //                                appDatabase.close();
+                                Log.d("TAG", "onPermissionsChecked: resteror");
 
                                 File db = new File(ROOT_DOWNLOAD_DIR_DOCUMENT, "word_database");
                                 File dbShm = new File(db.getParent(), "word_database-shm");
@@ -203,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
                                     copyFileUsingJava7Files(db, db2);
                                     copyFileUsingJava7Files(dbShm, dbShm2);
                                     copyFileUsingJava7Files(dbWal, dbWal2);
+//                                    mWordViewModel.restore();
                                 } catch (Exception e) {
                                     Log.d("TAG", e.toString());
                                 }
@@ -228,17 +230,6 @@ public class MainActivity extends AppCompatActivity {
             } else  {
                 Files.copy(source.toPath(), dest.toPath());
             }
-        }
-    }
-
-    private static void replaceFile(File source, File dest) throws  IOException {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//            File file = new File(dest.getAbsolutePath());
-//            file.delete();
-            if (dest.exists())
-            Files.deleteIfExists(dest.toPath());
-            Files.copy(source.toPath(), dest.toPath());
-
         }
     }
 

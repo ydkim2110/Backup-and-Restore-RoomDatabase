@@ -18,6 +18,8 @@ package com.example.android.roomwordssample;
 
 import android.app.Application;
 import androidx.lifecycle.LiveData;
+import androidx.sqlite.db.SimpleSQLiteQuery;
+
 import android.os.AsyncTask;
 
 import java.util.List;
@@ -54,6 +56,10 @@ class WordRepository {
     void insert(Word word) {
         new insertAsyncTask(mWordDao).execute(word);
     }
+
+//    void restore() {
+//        mWordDao.checkpoint(new SimpleSQLiteQuery("pragma wal_checkpoint(full)"));
+//    }
 
     private static class insertAsyncTask extends AsyncTask<Word, Void, Void> {
 

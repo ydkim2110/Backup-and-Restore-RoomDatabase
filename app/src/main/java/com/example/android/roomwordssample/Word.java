@@ -40,12 +40,28 @@ public class Word {
     @ColumnInfo(name = "word")
     private String mWord;
 
-    public Word(@NonNull String word) {
-        this.mWord = word;
+    @ColumnInfo(name = "count")
+    private int mCount;
+
+    public Word(@NonNull String word, int count) {
+        mWord = word;
+        mCount = count;
     }
 
     @NonNull
     public String getWord() {
-        return this.mWord;
+        return mWord;
+    }
+
+    public void setWord(@NonNull String word) {
+        mWord = word;
+    }
+
+    public int getCount() {
+        return mCount;
+    }
+
+    public void setCount(int count) {
+        mCount = count;
     }
 }
