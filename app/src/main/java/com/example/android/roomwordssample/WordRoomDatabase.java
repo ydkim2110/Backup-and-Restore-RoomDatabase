@@ -56,7 +56,8 @@ public abstract class WordRoomDatabase extends RoomDatabase {
         return INSTANCE;
     }
 
-//    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
+
+    //    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
 //        @Override
 //        public void migrate(SupportSQLiteDatabase database) {
 //            Log.d("TAG", "migrate: migrates 1_2");

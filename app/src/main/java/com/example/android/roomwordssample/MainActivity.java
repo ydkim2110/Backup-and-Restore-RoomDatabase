@@ -20,7 +20,6 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,6 +27,15 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 
 import com.commonsware.cwac.saferoom.SQLCipherUtils;
+import com.facebook.android.crypto.keychain.AndroidConceal;
+import com.facebook.android.crypto.keychain.SharedPrefsBackedKeyChain;
+import com.facebook.crypto.Crypto;
+import com.facebook.crypto.CryptoConfig;
+import com.facebook.crypto.Entity;
+import com.facebook.crypto.exception.CryptoInitializationException;
+import com.facebook.crypto.exception.KeyChainException;
+import com.facebook.crypto.keychain.KeyChain;
+import com.facebook.soloader.SoLoader;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
@@ -43,18 +51,19 @@ import androidx.appcompat.widget.Toolbar;
 import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -62,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String ROOT_DOWNLOAD_DIR =
             Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "BackupApp" + File.separator;
-    public static final String ROOT_DOWNLOAD_DIR_DOCUMENT = ROOT_DOWNLOAD_DIR + "Documents" + File.separator;
+    public static final String ROOT_DOWNLOAD_DIR_DOCUMENT = ROOT_DOWNLOAD_DIR;
 
     public static final int NEW_WORD_ACTIVITY_REQUEST_CODE = 1;
 
@@ -72,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+//        SoLoader.init(this, false);
         // Get a new or existing ViewModel from the ViewModelProvider.
         mWordViewModel = ViewModelProviders.of(this).get(WordViewModel.class);
 //        mWordViewModel.closeRoom();
@@ -80,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
 //        } else {
 //            Log.d("TAG", "onCreate: db belum ada");
 //        }
-
 //        mWordViewModel.openRoom();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -144,40 +153,61 @@ public class MainActivity extends AppCompatActivity {
                             public void onPermissionsChecked(MultiplePermissionsReport report) {
 //                                WordRoomDatabase appDatabase = WordRoomDatabase.getDatabase(getApplicationContext());
 //                                appDatabase.close();
-                                Log.d("TAG", "onOptionsItemSelected: test: " + MainActivity.this.getDatabasePath("word_database").getAbsoluteFile());
+
+                                Log.d("TAG", "onOptionsItemSelected: " + MainActivity.this.getDatabasePath("word_database").getAbsoluteFile());
                                 File dbOri = getDatabasePath("word_database");
-//                                File dbShmOri = getDatabasePath("word_database-shm");
-//                                File dbWal = getDatabasePath("word_database-wal");
+                                File dbShmOri = getDatabasePath("word_database-shm");
+                                File dbWal = getDatabasePath("word_database-wal");
                                 File file = new File(ROOT_DOWNLOAD_DIR_DOCUMENT);
                                 if (!file.exists()) {
                                     file.mkdirs();
                                 }
 
                                 File db2 = new File(ROOT_DOWNLOAD_DIR_DOCUMENT, "word_database");
+                                try {
+                                    backupFile(dbOri, db2);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                                 if (db2.exists()) {
                                     Log.d("tAG", "onPermissionsChecked: data ada");
                                     db2.setWritable(true);
                                 }
-//                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
-//                                if (dbShm2.exists()) {
-//                                    dbShm2.setWritable(true);
-//                                }
-//                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
-//                                if (dbWal2.exists()) {
-//                                    dbWal2.setWritable(true);
-//                                }
-
-                                try {
-                                    copyFileUsingJava7Files(dbOri, db2);
-//                                    copyFileUsingJava7Files(dbShmOri, dbShm2);
-//                                    copyFileUsingJava7Files(dbWal, dbWal2);
-                                    Toast.makeText(MainActivity.this, "Backup sukses", Toast.LENGTH_SHORT).show();
-                                } catch (Exception e) {
-                                    Log.e("TAG", e.toString());
-                                    Toast.makeText(MainActivity.this, "eror", Toast.LENGTH_SHORT).show();
-
+                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
+                                if (dbShm2.exists()) {
+                                    dbShm2.setWritable(true);
+                                }
+                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
+                                if (dbWal2.exists()) {
+                                    dbWal2.setWritable(true);
                                 }
 
+                                try {
+                                    backupFile(dbShmOri, dbShm2);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                try {
+                                    backupFile(dbWal, dbWal2);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+//                                try {
+//                                    copyFileUsingJava7Files(dbOri, db2);
+////                                    copyFileUsingJava7Files(dbShmOri, dbShm2);
+////                                    copyFileUsingJava7Files(dbWal, dbWal2);
+//                                    Log.d("TAG", "onPermissionsChecked: "+db2.getAbsolutePath());
+//                                    Toast.makeText(MainActivity.this, "Backup sukses", Toast.LENGTH_SHORT).show();
+//                                    Intent intent = new Intent(MainActivity.this, MainActivity.class);
+//                                    startActivity(intent);
+//                                    System.exit(0);
+//
+//
+//                                } catch (Exception e) {
+//                                    Log.e("TAG", e.toString());
+//                                    Toast.makeText(MainActivity.this, "eror", Toast.LENGTH_SHORT).show();
+//                                }
 
                             }
 
@@ -186,8 +216,6 @@ public class MainActivity extends AppCompatActivity {
 
                             }
                         }).check();
-
-
                 break;
             case R.id.action_restore:
                 Dexter.withActivity(this)
@@ -198,28 +226,45 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.makeText(MainActivity.this, "Restore", Toast.LENGTH_SHORT).show();
 //                                WordRoomDatabase appDatabase = WordRoomDatabase.getDatabase(getApplicationContext());
 //                                appDatabase.close();
-                                Log.d("TAG", "onPermissionsChecked: resteror");
+
+                                Log.d("TAG", "onPermissionsChecked: proses restore");
 
                                 File db = new File(ROOT_DOWNLOAD_DIR_DOCUMENT, "word_database");
-//                                File dbShm = new File(db.getParent(), "word_database-shm");
-//                                File dbWal = new File(db.getParent(), "word_database-wal");
+                                File dbShm = new File(db.getParent(), "word_database-shm");
+                                File dbWal = new File(db.getParent(), "word_database-wal");
 
                                 File db2 = getDatabasePath("word_database");
-//                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
-//                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
+                                File dbShm2 = new File(db2.getParent(), "word_database-shm");
+                                File dbWal2 = new File(db2.getParent(), "word_database-wal");
 
-                                try {
-                                    copyFileUsingJava7Files(db, db2);
-//                                    copyFileUsingJava7Files(dbShm, dbShm2);
-//                                    copyFileUsingJava7Files(dbWal, dbWal2);
-                                    Toast.makeText(MainActivity.this, "restore sukses", Toast.LENGTH_SHORT).show();
-//                                    mWordViewModel.closeRoom();
-//                                    mWordViewModel.openRoom();
-//                                    mWordViewModel.restore();
-                                } catch (Exception e) {
-                                    Log.d("TAG", e.toString());
-                                    Toast.makeText(MainActivity.this, "restor eror", Toast.LENGTH_SHORT).show();
-                                }
+                                restoreFile(db, db2);
+                                restoreFile(dbShm, dbShm2);
+                                restoreFile(dbWal, dbWal2);
+                                Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                                startActivity(intent);
+                                System.exit(0);
+//                                try {
+////                                    String word = "password";
+////                                    char[] pass = word.toCharArray();
+////                                    SQLCipherUtils.decrypt(MainActivity.this,db, pass);
+////                                    Log.d("TAG", "onCreate: status: " + SQLCipherUtils.getDatabaseState(db));
+//                                    copyFileUsingJava7Files(db, db2);
+////                                    copyFileUsingJava7Files(dbShm, dbShm2);
+////                                    copyFileUsingJava7Files(dbWal, dbWal2);
+//                                    Toast.makeText(MainActivity.this, "restore sukses", Toast.LENGTH_SHORT).show();
+//                                    Log.d("TAG", "onPermissionsChecked: suskes restor");
+////                                    mWordViewModel.closeRoom();
+////                                    mWordViewModel.openRoom();
+////                                    mWordViewModel.restore();
+//                                    Intent intent = new Intent(MainActivity.this, MainActivity.class);
+//                                    startActivity(intent);
+//                                    System.exit(0);
+//
+//
+//                                } catch (Exception e) {
+//                                    Log.d("TAG", "eror restore" + e);
+//                                    Toast.makeText(MainActivity.this, "restor eror", Toast.LENGTH_SHORT).show();
+//                                }
 
                             }
 
@@ -239,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Log.d("TAG", "onCreate: belum enkripsi" + SQLCipherUtils.getDatabaseState(dbOri));
+                Log.d("TAG", "onCreate: proses enkripsi" + SQLCipherUtils.getDatabaseState(dbOri));
                 break;
 
         }
@@ -256,6 +301,106 @@ public class MainActivity extends AppCompatActivity {
                 Files.copy(source.toPath(), dest.toPath());
             }
         }
+    }
+
+
+    private void backupFile(File fileOri, File fileDestiny) throws IOException {
+
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            is = new FileInputStream(fileOri);
+            os = new FileOutputStream(fileDestiny);
+            KeyChain keyChain = new CustomKeyChain();
+            Crypto crypto = AndroidConceal.get().createDefaultCrypto(keyChain);
+            if (!crypto.isAvailable()) {
+                return;
+            }
+            OutputStream outputStreamEnkrip = crypto.getCipherOutputStream(os,Entity.create("entity_id"));
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                outputStreamEnkrip.write(buffer, 0, length);
+            }
+            outputStreamEnkrip.close();
+        } catch (IOException | CryptoInitializationException | KeyChainException e) {
+            e.printStackTrace();
+        }
+//        try {
+//            // Creates a new Crypto object with default implementations of a key chain
+////            KeyChain keyChain = new SharedPrefsBackedKeyChain(MainActivity.this, CryptoConfig.KEY_256);
+//            KeyChain keyChain = new CustomKeyChain();
+//            try {
+//                Log.d("TAG", "backupFile: keychain key; "+ Arrays.toString(keyChain.getCipherKey()));
+//            } catch (KeyChainException e) {
+//                e.printStackTrace();
+//            }
+//            Crypto crypto = AndroidConceal.get().createDefaultCrypto(keyChain);
+//            if (!crypto.isAvailable()) {
+//                return;
+//            }
+//
+//            FileInputStream inputStream = new FileInputStream(fileOri);
+//            OutputStream outStream = new FileOutputStream(fileDestiny);
+//            OutputStream outputStreamEnkrip = null;
+//            try {
+//                outputStreamEnkrip = crypto.getCipherOutputStream(
+//                        outStream,
+//                        Entity.create("entity_id"));
+//            } catch (CryptoInitializationException e) {
+//                e.printStackTrace();
+//            } catch (KeyChainException e) {
+//                e.printStackTrace();
+//            }
+//
+//            int read;
+//            byte[] buffer = new byte[1024];
+//            while ((read = inputStream.read(buffer)) != -1) {
+//                outStream.write(buffer, 0, read);
+//            }
+//
+//            outStream.close();
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+    private void restoreFile(File ori, File destiny) {
+        try {
+//            KeyChain keyChain = new SharedPrefsBackedKeyChain(MainActivity.this, CryptoConfig.KEY_256);
+            KeyChain keyChain = new CustomKeyChain();
+            Log.d("tAG", "restoreFile: key chiperkey: " + keyChain.getCipherKey());
+            Crypto crypto = AndroidConceal.get().createDefaultCrypto(keyChain);
+            if (!crypto.isAvailable()) {
+                return;
+            }
+            FileInputStream fileStreamChipper = new FileInputStream(ori);
+            InputStream inputStream = null;
+
+            inputStream = crypto.getCipherInputStream(
+                    fileStreamChipper,
+                    Entity.create("entity_id"));
+
+            OutputStream outStream = new FileOutputStream(destiny);
+
+            int read;
+            byte[] buffer = new byte[1024];
+            while ((read = inputStream.read(buffer)) != -1) {
+                outStream.write(buffer, 0, read);
+            }
+            Log.d("TAG", "restoreFile: proses restore");
+            outStream.close();
+            inputStream.close();
+        } catch (IOException e) {
+            Log.d("TAG", "restoreFile: io" + e);
+        } catch (CryptoInitializationException e) {
+            Log.d("tAG", "restoreFile: crypto init");
+        } catch (KeyChainException e) {
+            Log.d("TAG", "restoreFile: keychain");
+        }
+
+
     }
 
 
